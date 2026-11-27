@@ -7,7 +7,32 @@ public static class ProductoEndpoints
         var api = app.MapGroup("/api/productos");
 
         // Leer
-        api.MapGet("/", async (AppDb db) => await db.Productos.OrderBy(p => p.Codigo).ToListAsync());
+        api.MapGet("/", async (AppDb db, string? buscar, string? categoria,
+            decimal? min, decimal? max, bool? stockBajo, string? orden) =>
+        {
+            var q = db.Productos.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(buscar))
+            {
+                var texto = buscar.Trim().ToLower();
+                q = q.Where(p => p.Codigo.ToLower().Contains(texto) || p.Nombre.ToLower().Contains(texto));
+            }
+            if (!string.IsNullOrEmpty(categoria)) q = q.Where(p => p.Categoria == categoria);
+            if (min is not null) q = q.Where(p => p.Precio >= min);
+            if (max is not null) q = q.Where(p => p.Precio <= max);
+            if (stockBajo == true) q = q.Where(p => p.Stock <= 5);
+
+            q = orden switch
+            {
+                "nombre" => q.OrderBy(p => p.Nombre),
+                "precio" => q.OrderBy(p => p.Precio),
+                "precioDesc" => q.OrderByDescending(p => p.Precio),
+                "stock" => q.OrderBy(p => p.Stock),
+                _ => q.OrderBy(p => p.Codigo)
+            };
+
+            return await q.ToListAsync();
+        });
 
         // Crear
         api.MapPost("/", async (Producto p, AppDb db) =>
