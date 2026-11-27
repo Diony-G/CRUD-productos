@@ -26,6 +26,29 @@
         <button type="reset">Cancelar</button>
     </form>
 
+    <h3>Filtros</h3>
+    <form id="filtros">
+        <input name="buscar" placeholder="Buscar código o nombre">
+        <select name="categoria">
+            <option value="">Todas las categorías</option>
+            <option>Electrónica</option>
+            <option>Hogar</option>
+            <option>Oficina</option>
+            <option>Otros</option>
+        </select>
+        <input name="min" type="number" step="0.01" min="0" placeholder="Precio mínimo">
+        <input name="max" type="number" step="0.01" min="0" placeholder="Precio máximo">
+        <select name="orden">
+            <option value="">Ordenar por código</option>
+            <option value="nombre">Nombre</option>
+            <option value="precio">Precio: menor a mayor</option>
+            <option value="precioDesc">Precio: mayor a menor</option>
+            <option value="stock">Stock</option>
+        </select>
+        <label><input name="stockBajo" type="checkbox" value="true"> Stock bajo (5 o menos)</label>
+        <button type="reset">Limpiar</button>
+    </form>
+
     <p id="resumen"></p>
     <div class="tabla">
         <table>
@@ -41,7 +64,8 @@
         let editando = null;
 
         async function cargar() {
-            const productos = await (await fetch(api)).json();
+            const params = new URLSearchParams([...new FormData(filtros)].filter(([, v]) => v !== ''));
+            const productos = await (await fetch(`${api}?${params}`)).json();
 
             lista.replaceChildren();
             let valor = 0;
@@ -100,6 +124,9 @@
         };
 
         cargar();
+        filtros.oninput = cargar;
+        filtros.onsubmit = e => e.preventDefault();
+        filtros.onreset = () => setTimeout(cargar);
     </script>
 </body>
 </html>
