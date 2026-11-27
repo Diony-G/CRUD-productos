@@ -8,7 +8,8 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
     scope.ServiceProvider.GetRequiredService<AppDb>().Database.EnsureCreated();
 
-app.MapGet("/", () => "API de productos funcionando");
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 // Leer
 app.MapGet("/api/productos", async (AppDb db) => await db.Productos.ToListAsync());
