@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Productos</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <h1>Productos</h1>
+
+    <form id="form">
+        <input id="nombre" placeholder="Nombre" required>
+        <input id="precio" type="number" step="0.01" min="0.01" placeholder="Precio" required>
+        <button>Guardar</button>
+    </form>
+
+    <table>
+        <thead><tr><th>Nombre</th><th>Precio</th><th>Acciones</th></tr></thead>
+        <tbody id="lista"></tbody>
+    </table>
+
+    <script>
+    const api = '/api/productos';
+    let editando = null;
+
+    async function cargar() {
+      const productos = await (await fetch(api)).json();
+      lista.replaceChildren();
+      for (const p of productos) {
+        const fila = lista.insertRow();
+        fila.insertCell().textContent = p.nombre;
+        fila.insertCell().textContent = p.precio.toFixed(2);
+        fila.insertCell().append(
+          boton('Editar', () => {
+            editando = p.id;
+            nombre.value = p.nombre;
+            precio.value = p.precio;
+          }),
+          boton('Eliminar', async () => {
+            await fetch(`${api}/${p.id}`, { method: 'DELETE' });
+            editando = null;
+            form.reset();
+            cargar();
+          }));
+      }
+    }
+
+    function boton(texto, accion) {
+      const b = document.createElement('button');
+      b.textContent = texto;
+      b.onclick = accion;
+      return b;
+    }
+
+    form.onsubmit = async e => {
+      e.preventDefault();
+      const res = await fetch(editando ? `${api}/${editando}` : api, {
+        method: editando ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: nombre.value, precio: Number(precio.value) })
+      });
+      if (!res.ok) return alert('No se pudo guardar. Revisa el nombre y el precio.');
+      editando = null;
+      form.reset();
+      cargar();
+    };
+
+    cargar();
+    </script>
+</body>
+</html>
+</body>
+</html>
